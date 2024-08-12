@@ -12,6 +12,7 @@ import { theme } from "./colors";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 const STORAGE_KEY = "@toDos";
 const WORKING_KEY = "@working";
@@ -60,7 +61,10 @@ export default function App() {
       return;
     }
     //save to do
-    const newToDos = { ...toDos, [Date.now()]: { text, working } };
+    const newToDos = {
+      ...toDos,
+      [Date.now()]: { text, working, compeleted: false },
+    };
     setToDos(newToDos);
     await saveToDos(newToDos);
     //input란 비우기
@@ -99,6 +103,14 @@ export default function App() {
     } catch (e) {
       alert("loadWorking error");
     }
+  };
+
+  //todo 완료 기능
+  const compeleteToDo = (key) => {
+    const newToDos = { ...toDos };
+    newToDos[key].compeleted = !newToDos[key].compeleted; // 상태 토글
+    setToDos(newToDos);
+    saveToDos(newToDos);
   };
 
   return (
@@ -144,12 +156,35 @@ export default function App() {
         {Object.keys(toDos).map((key) =>
           toDos[key].working === working ? (
             <View style={styles.toDo}>
-              <Text key={key} style={styles.toDoText}>
+              <Text
+                key={key}
+                style={[
+                  styles.toDoText,
+                  toDos[key].compeleted ? styles.compeletedText : null,
+                ]}
+              >
                 {toDos[key].text}
               </Text>
-              <TouchableOpacity onPress={() => deleteToDo(key)}>
-                <Ionicons name="trash" size={24} color="white" />
-              </TouchableOpacity>
+              <View style={styles.toDoActions}>
+                <TouchableOpacity onPress={() => compeleteToDo(key)}>
+                  {toDos[key].compeleted ? (
+                    <MaterialCommunityIcons
+                      name="checkbox-marked"
+                      size={24}
+                      color="white"
+                    />
+                  ) : (
+                    <MaterialCommunityIcons
+                      name="checkbox-blank-outline"
+                      size={24}
+                      color="white"
+                    />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => deleteToDo(key)}>
+                  <Ionicons name="trash" size={24} color="white" />
+                </TouchableOpacity>
+              </View>
             </View>
           ) : null
         )}
@@ -198,5 +233,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     //backgroundColor: "green",
+  },
+  toDoActions: {
+    //backgroundColor: "green",
+    flexDirection: "row",
+    color: "white",
+    alignItems: "center",
+  },
+  compeletedText: {
+    textDecorationLine: "line-through",
+    color: "lightgray",
   },
 });
