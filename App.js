@@ -21,6 +21,8 @@ export default function App() {
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
   const [toDos, setToDos] = useState({}); //hashmap 같은 것을 만들 것임. array가 아니라 object(key와 value)
+  const [editingId, setEditingId] = useState(null); // 수정할 toDo의 id(key)
+  const [editingText, setEditingText] = useState(""); // 수정할 text
 
   //앱을 처음 실행할 때 toDos들이 로드됨.
   useEffect(() => {
@@ -113,6 +115,23 @@ export default function App() {
     saveToDos(newToDos);
   };
 
+  //todo 수정 기능
+  const startEditing = (key) => {
+    setEditingId(key); // 수정할 text의 key 저장
+    setEditingText(toDos[key].text); //수정할 text로 설정
+  };
+
+  const updateToDo = (key) => {
+    if (editingText === "") {
+      return;
+    }
+    const newToDos = { ...toDos };
+    newToDos[key].text = editingText; //text update
+    setToDos(newToDos);
+    saveToDos(newToDos);
+    setEditingId(null); // 수정 모드 종료
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
@@ -155,16 +174,27 @@ export default function App() {
         {/* Object.keys(x) : x의 key들을 배열로 반환함. */}
         {Object.keys(toDos).map((key) =>
           toDos[key].working === working ? (
-            <View style={styles.toDo}>
-              <Text
-                key={key}
-                style={[
-                  styles.toDoText,
-                  toDos[key].compeleted ? styles.compeletedText : null,
-                ]}
-              >
-                {toDos[key].text}
-              </Text>
+            <View key={key} style={styles.toDo}>
+              {editingId === key ? (
+                <TextInput
+                  value={editingText}
+                  onChangeText={setEditingText}
+                  onSubmitEditing={() => updateToDo(key)}
+                  style={styles.editInput}
+                  autoFocus
+                />
+              ) : (
+                <TouchableOpacity onPress={() => startEditing(key)}>
+                  <Text
+                    style={[
+                      styles.toDoText,
+                      toDos[key].compeleted ? styles.compeletedText : null,
+                    ]}
+                  >
+                    {toDos[key].text}
+                  </Text>
+                </TouchableOpacity>
+              )}
               <View style={styles.toDoActions}>
                 <TouchableOpacity onPress={() => compeleteToDo(key)}>
                   {toDos[key].compeleted ? (
@@ -230,7 +260,7 @@ const styles = StyleSheet.create({
   },
   toDoText: {
     color: "white",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "500",
     //backgroundColor: "green",
   },
@@ -243,5 +273,11 @@ const styles = StyleSheet.create({
   compeletedText: {
     textDecorationLine: "line-through",
     color: "lightgray",
+  },
+  editInput: {
+    flex: 1,
+    color: "white",
+    fontSize: 18,
+    fontWeight: "680",
   },
 });
