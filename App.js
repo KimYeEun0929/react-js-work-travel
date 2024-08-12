@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 const STORAGE_KEY = "@toDos";
+const WORKING_KEY = "@working";
 
 export default function App() {
   const [working, setWorking] = useState(true);
@@ -23,12 +24,20 @@ export default function App() {
   //앱을 처음 실행할 때 toDos들이 로드됨.
   useEffect(() => {
     loadToDos(STORAGE_KEY);
+    loadWorking(WORKING_KEY);
   }, []);
 
-  const travel = () => setWorking(false); //여행탭은 false
-  const work = () => setWorking(true); //일 탭은 true
+  const travel = async () => {
+    setWorking(false); //여행탭은 false
+    await saveWorking(false);
+  };
+  const work = async () => {
+    setWorking(true); //일 탭은 true
+    await saveWorking(true);
+  };
   const onChangeText = (payload) => setText(payload); //payload는 input에 쓴 나의 글
 
+  //toDo 관련 함수들
   const saveToDos = async (toSave) => {
     try {
       const s = JSON.stringify(toSave);
@@ -74,6 +83,24 @@ export default function App() {
     ]);
   };
 
+  //working 저장관련 함수들
+  const saveWorking = async (value) => {
+    try {
+      await AsyncStorage.setItem(WORKING_KEY, JSON.stringify(value));
+    } catch (e) {
+      alert("saveWorking error");
+    }
+  };
+
+  const loadWorking = async () => {
+    try {
+      const s = await AsyncStorage.getItem(WORKING_KEY);
+      setWorking(JSON.parse(s) !== null ? JSON.parse(s) : true); //기본값 true
+    } catch (e) {
+      alert("loadWorking error");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
@@ -113,11 +140,13 @@ export default function App() {
 
       {/* ToDo */}
       <ScrollView>
-        {/* Object.keys(x) : x의 key들을 배열로 나타냄. */}
+        {/* Object.keys(x) : x의 key들을 배열로 반환함. */}
         {Object.keys(toDos).map((key) =>
           toDos[key].working === working ? (
             <View style={styles.toDo}>
-              <Text style={styles.toDoText}>{toDos[key].text}</Text>
+              <Text key={key} style={styles.toDoText}>
+                {toDos[key].text}
+              </Text>
               <TouchableOpacity onPress={() => deleteToDo(key)}>
                 <Ionicons name="trash" size={24} color="white" />
               </TouchableOpacity>
